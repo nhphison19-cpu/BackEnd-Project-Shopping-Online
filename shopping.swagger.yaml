@@ -1,0 +1,205 @@
+openapi: "3.0.3"
+info:
+  title: "Hệ thống Bán hàng Trực tuyến API (Shopping Online)"
+  version: "1.0.0"
+  description: "Tài liệu tổng hợp API đầy đủ cho toàn bộ các module trong hệ thống E-Commerce."
+servers:
+  - url: "http://localhost:5000"
+    description: "Môi trường Local"
+
+paths:
+  # ==========================================
+  # 1. AUTHENTICATION & USER
+  # ==========================================
+  /api/user/register:
+    post:
+      summary: "Đăng ký tài khoản khách hàng mới"
+      tags:
+        - "User & Auth"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["email", "password", "name"]
+              properties:
+                email: { type: "string", example: "khachhang@gmail.com" }
+                password: { type: "string", example: "password123" }
+                name: { type: "string", example: "Nguyễn Văn A" }
+      responses:
+        201:
+          description: "Đăng ký thành công"
+
+  /api/user/login:
+    post:
+      summary: "Đăng nhập hệ thống lấy Access Token"
+      tags:
+        - "User & Auth"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["email", "password"]
+              properties:
+                email: { type: "string", example: "khachhang@gmail.com" }
+                password: { type: "string", example: "password123" }
+      responses:
+        200:
+          description: "Đăng nhập thành công, trả về JWT Token."
+
+  # ==========================================
+  # 2. PRODUCT (SẢN PHẨM)
+  # ==========================================
+  /api/product:
+    get:
+      summary: "Lấy danh sách toàn bộ sản phẩm"
+      tags:
+        - "Product"
+      responses:
+        200:
+          description: "Thành công"
+    post:
+      summary: "Thêm sản phẩm mới (Yêu cầu Login)"
+      tags:
+        - "Product"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["name", "price", "stock"]
+              properties:
+                name: { type: "string", example: "iPhone 15 Pro Max" }
+                price: { type: "number", example: 30000000 }
+                discountPrice: { type: "number", example: 28500000 }
+                stock: { type: "integer", example: 100 }
+      responses:
+        201:
+          description: "Tạo sản phẩm thành công"
+
+  # ==========================================
+  # 3. ORDER (ĐƠN HÀNG)
+  # ==========================================
+  /api/order/create:
+    post:
+      summary: "Khách hàng tiến hành tạo đơn hàng (Trừ kho tự động)"
+      tags:
+        - "Order"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["items"]
+              properties:
+                items:
+                  type: "array"
+                  items:
+                    type: "object"
+                    required: ["productId", "quantity"]
+                    properties:
+                      productId: { type: "string", example: "prod-uuid-123" }
+                      quantity: { type: "integer", example: 1 }
+      responses:
+        201:
+          description: "Tạo đơn hàng thành công"
+
+  # ==========================================
+  # 4. CART (GIỎ HÀNG)
+  # ==========================================
+  /api/cart:
+    get:
+      summary: "Xem sản phẩm trong giỏ hàng"
+      tags:
+        - "Cart"
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: "Thành công"
+    post:
+      summary: "Thêm sản phẩm vào giỏ hàng"
+      tags:
+        - "Cart"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["productId", "quantity"]
+              properties:
+                productId: { type: "string", example: "prod-uuid-123" }
+                quantity: { type: "integer", example: 1 }
+      responses:
+        200:
+          description: "Cập nhật giỏ hàng thành công"
+
+  # ==========================================
+  # 5. CATEGORY & BRAND & INFORMATION
+  # ==========================================
+  /api/category:
+    get:
+      summary: "Lấy danh mục sản phẩm"
+      tags:
+        - "Metadata (Category/Brand/Info)"
+  /api/brand:
+    get:
+      summary: "Lấy danh sách thương hiệu"
+      tags:
+        - "Metadata (Category/Brand/Info)"
+  /api/information:
+    get:
+      summary: "Lấy thông tin bổ sung/cấu hình hệ thống"
+      tags:
+        - "Metadata (Category/Brand/Info)"
+
+  # ==========================================
+  # 6. REVIEW & WISHLIST & PAYMENT
+  # ==========================================
+  /api/review:
+    post:
+      summary: "Gửi đánh giá sản phẩm"
+      tags:
+        - "Interactions & Payment"
+      security:
+        - BearerAuth: []
+      responses:
+        201:
+          description: "Đăng đánh giá thành công"
+  /api/wishlist:
+    get:
+      summary: "Lấy danh sách sản phẩm yêu thích"
+      tags:
+        - "Interactions & Payment"
+      security:
+        - BearerAuth: []
+  /api/payment/checkout:
+    post:
+      summary: "Xử lý thanh toán đơn hàng"
+      tags:
+        - "Interactions & Payment"
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: "Thành công"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: "http"
+      scheme: bearer
+      bearerFormat: "JWT"
+      description: "Nhập token của bạn để test API có bảo mật."

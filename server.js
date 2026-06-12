@@ -1,15 +1,16 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const swaggerUi = require('swagger-ui-express') // ← Thêm thư viện này
+const YAML = require('yamljs')                   // ← Thêm thư viện này
+const path = require('path')                     // ← Thêm thư viện này
 
 dotenv.config()
 
 const app = express()
 
-// FIX 1: CORS origin was set to http://localhost:5000 (backend itself).
-// Changed to allow frontend dev server on port 5173.
 app.use(cors({
-  origin: 'http://localhost:5173',  // ← đúng port của Vite
+  origin: 'http://localhost:5173', 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -17,10 +18,10 @@ app.use(cors({
 
 app.use(express.json())
 
-// FIX 2: Original code had routes mounted twice:
-//   routes(app)  -> mounts /api/user, /api/product, etc.
-//   app.use('/api', rootRouter)  -> would mount them again as /api/api/...
-// Removed the duplicate. Only call routes(app) once.
+// --- CẤU HÌNH SWAGGER NẰM Ở ĐÂY ---
+const swaggerDocument = YAML.load(path.join(__dirname, './shopping.swagger.yaml'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 const routes = require('./src/routes')
 routes(app)
 
@@ -28,11 +29,9 @@ app.get('/', (req, res) => {
     res.send('API running....')
 })
 
-// FIX 3: require path was '../backend/src/routes' which is wrong relative to server.js location.
-// Corrected above to './src/routes'.
-
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
     console.log(`Server running on port: ${PORT}`)
+    console.log(`Swagger docs có sẵn tại: http://localhost:${PORT}/api-docs`) // ← Log thêm để tiện click chuột
 })
